@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 import pandas as pd
 from Functions import *
+from datetime import date
 
 class Scorer():
     def __init__(self, df_path) -> None:
@@ -11,15 +12,29 @@ class Scorer():
     def orchestrator(self):
         print("\n > Initialized Scoring process.")
         test_data=pd.read_csv(self.df_path)
+        print("\n > Test data read.")
         sample_data=pd.DataFrame(test_data.text)
+        print("\n > Loading model.")
         model = self.load_model()
-        variables = test_data.drop("target", axis = 1)
+        print("\n > Model loaded.")
+        vectorizer=self.load_vectorizer()
+        variables = test_data.text
+        print("\n > Preprocessing and Vectorizing.")
         encoded = self.preprocessing(variables)
-        vectorized = self.vectorizer(encoded)
+        print("\n > Loading vectorizer.")
+        vectorized = self.vectorizer(encoded,vectorizer)
+        print("\n > Making predictions.")
         predictions = self.predict(model=model, X=vectorized)
-        sample_data["predicted_charges"] = predictions
+        sample_data["predictions"] = predictions
         print('\n------------------\nPredictions for Test Data\n------------------\n')
         print(sample_data)
+        filename= f'Predictions - {date.today()}.csv'
+        with open(filename, 'a') as file:
+            file.write("Text,Predictions\n")
+            for i in range(sample_data.shape[0]):
+                line = str(sample_data.text[i]) + "," + str(sample_data.predictions[i])
+                file.write(line + "\n")
+        print(f"Training results have been saved to {filename}")
 
     def load_model(self):
         print("\n > Loading BestModel from memory.")
@@ -27,34 +42,26 @@ class Scorer():
             loaded_model = pickle.load(file)
             return loaded_model
         
-    def vectorizer(self,X_test):
+    def load_vectorizer(self):
+        print("\n > Loading Vectorizer from memory.")
+        with open('vectorizer.pkl', 'rb') as file:
+            vectorizer = pickle.load(file)
+            return vectorizer
+        
+    def vectorizer(self,X_test,vectorizer):
         X_test=[text for text in X_test]
-        print('\nAvailable Vectorizers: \n-CountVectorizer \n-TfidfVectorizer ')
+        X_test_embedding=vectorizer.transform(X_test) 
+        return X_test_embedding
         
-        vectorizer=input("\nChoose Vectorizer: ")
-                
-        # Validar la elección del usuario
-        while vectorizer not in ['CountVectorizer', 'TfidfVectorizer']:
-            print("Vectorizer not available. Please try again.")
-            vectorizer = input("Choose Vectorizer: ")
-            
-        if vectorizer=='CountVectorizer':
-            vectorizer = CountVectorizer()
-            X_test = vectorizer.fit_transform(X_train) 
-            return X_test,'CountVectorizer'
-        
-        elif vectorizer=='TfidfVectorizer':
-            vectorizer = TfidfVectorizer()
-            X_test = vectorizer.fit_transform(X_train) 
-            returnX_test,'TfidfVectorizer'
-        
-    def preprocessing(self, df):
+    def preprocessing(self, variables):
         print("\n > Preprocessing text data.")
-        df.text=df.text.apply(lambda x:preprocess(x))
+        variables=variables.apply(lambda x:preprocess(x))
         print("\n > Text data preprocessed.")
-        return df
+        return variables
     
     def predict(self, model, X):
         print("\n > Predicting charges...")
         predictions = model.predict(X)
         return predictions
+
+
