@@ -21,10 +21,7 @@ from Functions import *
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from gensim.models import Word2Vec, Doc2Vec
-import tensorflow as tf
-
-
-
+#import tensorflow as tf
 
 
 '''
@@ -98,21 +95,20 @@ class Trainer():
             vectorizer = CountVectorizer()
             X_train_embedding = vectorizer.fit_transform(X_train) 
             X_val_embedding = vectorizer.transform(X_val)  
+            with open('vectorizer.pkl', 'wb') as file:
+                print(f"\n > Exporting vectorizer to pkl file 'best_model.pkl'⬇️💾")
+                pickle.dump(vectorizer, file)
             return X_train_embedding,X_val_embedding,'CountVectorizer'
+        
         
         elif vectorizer=='TfidfVectorizer':
             vectorizer = TfidfVectorizer()
             X_train_embedding = vectorizer.fit_transform(X_train) 
             X_val_embedding = vectorizer.transform(X_val)  
+            with open('vectorizer.pkl', 'wb') as file:
+                print(f"\n > Exporting vectorizer to pkl file 'best_model.pkl'⬇️💾")
+                pickle.dump(vectorizer, file)
             return X_train_embedding,X_val_embedding,'TfidfVectorizer'
-    
-    # def scale_numerical_features(self,X_train, X_val):
-        
-    #     print("\n > Scaling numerical variables. Make sure this process is always performed after splitting your data to avoid data leakage.")
-    #     scaler = StandardScaler()
-    #     X_train = scaler.fit_transform(X_train)
-    #     X_val = scaler.transform(X_val)
-    #     return X_train, X_val
     
     def train_models(self):
         print("\n > Training models. Performing HyperParameter tunning with Gridsearch cross validation. This could take a while..🧠")
@@ -132,6 +128,7 @@ class Trainer():
 
         self.train_logistic_regression()
         self.train_random_forest_classifier()
+        self.train_neural_network_classifier()
   
 
     def train_logistic_regression(self):
@@ -282,6 +279,8 @@ class Trainer():
         with open('best_model.pkl', 'wb') as file:
             print(f"\n > Exporting best model to pkl file 'best_model.pkl'⬇️💾")
             pickle.dump(best, file)
+            
+
             
 
     
